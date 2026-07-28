@@ -16,7 +16,7 @@ function githubPagesAssetPaths(): Plugin {
 
 export default defineConfig({
   root: __dirname,
-  base: "/camline-valkyrie-atlas/",
+  base: "/kyrievalkcams/",
   publicDir: false,
   plugins: [react(), githubPagesAssetPaths()],
   build: {

@@ -5,7 +5,7 @@ import "../app/globals.css";
 
 declare global {
   interface Window {
-    __CAMLINE_GITHUB_PAGES__?: boolean;
+    __KYRIE_VALK_CAMS_GITHUB_PAGES__?: boolean;
   }
 }
 
@@ -25,7 +25,7 @@ type GitHubContent = {
 };
 
 const owner = "chatgonewild";
-const repo = "camline-valkyrie-atlas";
+const repo = "kyrievalkcams";
 const branch = "main";
 const pagesBase = `https://${owner}.github.io/${repo}/`;
 const apiBase = `https://api.github.com/repos/${owner}/${repo}`;
@@ -33,7 +33,7 @@ const originalFetch = window.fetch.bind(window);
 let githubToken = "";
 let githubLogin = "";
 
-window.__CAMLINE_GITHUB_PAGES__ = true;
+window.__KYRIE_VALK_CAMS_GITHUB_PAGES__ = true;
 
 function jsonResponse(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), {
