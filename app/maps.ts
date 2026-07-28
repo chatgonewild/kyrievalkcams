@@ -16,7 +16,7 @@ export const maps: SiegeMap[] = [
     released: "Jun 2026",
     category: "Ranked",
     isNew: true,
-    sites: ["2F Aqua / Kitchen", "2F Penthouse / High Roller", "1F Main Bar / Slots", "B Vault / Security"],
+    sites: ["2F Cigar Room / Pool", "1F Bar / Betting", "1F Blackjack / Poker", "B CCTV / Vault Checkpoint"],
   },
   {
     slug: "fortress",
