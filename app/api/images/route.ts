@@ -18,6 +18,7 @@ type ImageRow = {
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const maxBytes = 8 * 1024 * 1024;
+const maxSlotIndex = 11;
 
 function bindings() {
   return env as unknown as RuntimeEnv;
@@ -57,7 +58,12 @@ export async function POST(request: Request) {
     const siteIndex = Number(data.get("siteIndex"));
     const file = data.get("file");
 
-    if (!/^[a-z0-9-]+$/.test(mapSlug) || !Number.isInteger(siteIndex) || siteIndex < 0 || siteIndex > 8) {
+    if (
+      !/^[a-z0-9-]+$/.test(mapSlug) ||
+      !Number.isInteger(siteIndex) ||
+      siteIndex < 0 ||
+      siteIndex > maxSlotIndex
+    ) {
       return Response.json({ error: "Invalid map or site." }, { status: 400 });
     }
     if (!(file instanceof File) || file.size === 0) {
@@ -83,24 +89,42 @@ export async function POST(request: Request) {
       httpMetadata: { contentType: file.type, cacheControl: "public, max-age=31536000, immutable" },
     });
 
-    await DB.prepare(
-      `INSERT INTO site_images
-       (slot_id, map_slug, site_index, object_key, content_type, original_name, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(slot_id) DO UPDATE SET
-         object_key = excluded.object_key,
-         content_type = excluded.content_type,
-         original_name = excluded.original_name,
-         updated_at = excluded.updated_at`
-    )
-      .bind(id, mapSlug, siteIndex, objectKey, file.type, file.name.slice(0, 180), updatedAt)
-      .run();
-
-    if (current?.object_key && current.object_key !== objectKey) {
-      await MEDIA.delete(current.object_key);
+    try {
+      await DB.prepare(
+        `INSERT INTO site_images
+         (slot_id, map_slug, site_index, object_key, content_type, original_name, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(slot_id) DO UPDATE SET
+           object_key = excluded.object_key,
+           content_type = excluded.content_type,
+           original_name = excluded.original_name,
+           updated_at = excluded.updated_at`
+      )
+        .bind(id, mapSlug, siteIndex, objectKey, file.type, file.name.slice(0, 180), updatedAt)
+        .run();
+    } catch (error) {
+      await MEDIA.delete(objectKey).catch(() => undefined);
+      throw error;
     }
 
-    return Response.json({ ok: true, slotId: id, updatedAt }, { status: 201 });
+    if (current?.object_key && current.object_key !== objectKey) {
+      await MEDIA.delete(current.object_key).catch(() => undefined);
+    }
+
+    return Response.json(
+      {
+        ok: true,
+        image: {
+          slotId: id,
+          mapSlug,
+          siteIndex,
+          originalName: file.name.slice(0, 180),
+          updatedAt,
+          url: `/api/media/${encodeURIComponent(objectKey)}`,
+        },
+      },
+      { status: 201 }
+    );
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "Upload failed." },
@@ -122,8 +146,8 @@ export async function DELETE(request: Request) {
     const current = await DB.prepare("SELECT object_key FROM site_images WHERE slot_id = ?")
       .bind(id)
       .first<{ object_key: string }>();
-    if (current?.object_key) await MEDIA.delete(current.object_key);
     await DB.prepare("DELETE FROM site_images WHERE slot_id = ?").bind(id).run();
+    if (current?.object_key) await MEDIA.delete(current.object_key).catch(() => undefined);
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json(
