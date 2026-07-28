@@ -12,6 +12,17 @@ type ImageRecord = {
   url: string;
 };
 
+function isGitHubPages() {
+  return (
+    typeof window !== "undefined" &&
+    Boolean((window as Window & { __CAMLINE_GITHUB_PAGES__?: boolean }).__CAMLINE_GITHUB_PAGES__)
+  );
+}
+
+function publicAsset(path: string) {
+  return isGitHubPages() ? `/camline-valkyrie-atlas/public${path}` : path;
+}
+
 type UploadTarget = {
   map: SiegeMap;
   siteIndex: number;
@@ -77,7 +88,7 @@ function originalImage(map: SiegeMap, siteIndex: number, cameraIndex: number) {
   const sourceGroup = originalSiteGroups[map.slug]?.[siteIndex];
   if (sourceGroup === null || sourceGroup === undefined) return null;
   const number = sourceGroup * camerasPerSite + cameraIndex + 1;
-  return `/original/${map.slug}-${String(number).padStart(2, "0")}.jpg`;
+  return publicAsset(`/original/${map.slug}-${String(number).padStart(2, "0")}.jpg`);
 }
 
 function CameraGlyph() {
@@ -312,21 +323,25 @@ export function SiegeAtlas() {
             <button className="login-close" aria-label="Close admin login" onClick={() => setLoginOpen(false)}>×</button>
             <p className="eyebrow"><span /> Restricted access</p>
             <h2 id="admin-login-title">Admin login</h2>
-            <p>Sign in to manage the Black Eye camera library.</p>
+            <p>
+              {isGitHubPages()
+                ? "Connect your GitHub account to publish camera changes live."
+                : "Sign in to manage the Black Eye camera library."}
+            </p>
             <form onSubmit={signIn}>
               <label>
-                Username
+                {isGitHubPages() ? "GitHub username" : "Username"}
                 <input
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
                   autoComplete="username"
-                  inputMode="numeric"
+                  inputMode={isGitHubPages() ? "text" : "numeric"}
                   required
                   autoFocus
                 />
               </label>
               <label>
-                Password
+                {isGitHubPages() ? "Fine-grained GitHub token" : "Password"}
                 <input
                   type="password"
                   value={password}
@@ -337,9 +352,15 @@ export function SiegeAtlas() {
               </label>
               {loginError && <div className="login-error" role="alert">{loginError}</div>}
               <button className="login-submit" disabled={loginBusy}>
-                {loginBusy ? "Checking…" : "Enter control room"}
+                {loginBusy ? "Checking…" : isGitHubPages() ? "Connect and edit" : "Enter control room"}
               </button>
             </form>
+            {isGitHubPages() && (
+              <p className="login-token-note">
+                Use a fine-grained token limited to this repository with Contents read/write access.
+                It stays only in this browser tab.
+              </p>
+            )}
           </section>
         </div>
       )}
@@ -450,7 +471,7 @@ export function SiegeAtlas() {
                     <span className="map-number">{String(index + 1).padStart(2, "0")}</span>
                     <span className="map-thumb" aria-hidden="true">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/maps/${map.slug}.jpg`} alt="" loading="lazy" />
+                      <img src={publicAsset(`/maps/${map.slug}.jpg`)} alt="" loading="lazy" />
                     </span>
                     <span className="map-name">
                       <b>{map.name}</b>
@@ -472,7 +493,7 @@ export function SiegeAtlas() {
                   <div className="map-detail-image">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/maps/${selectedMap.slug}.jpg`}
+                      src={publicAsset(`/maps/${selectedMap.slug}.jpg`)}
                       alt={`${selectedMap.name} map overview`}
                     />
                     <div className="map-image-label">
