@@ -17,8 +17,36 @@ test("contains the complete Kyrie Valk Cams atlas experience", async () => {
   assert.match(atlas, /Admin login/i);
   assert.match(adminRoute, /credentialsMatch/i);
   assert.match(mapData, /Calypso Casino/i);
+  assert.match(
+    mapData,
+    /sites: \["2F Cigar Room \/ 2F Pool", "1F Blackjack \/ 1F Poker", "1F Bar \/ 1F Betting", "B CCTV \/ B Vault Checkpoint"\]/,
+  );
+  assert.match(
+    mapData,
+    /sites: \["2F Pink Room \/ 2F Car Room", "2F Master Bedroom \/ 2F Car Room", "1F TV Room \/ 1F Music Room", "B Gym \/ B Garage"\]/,
+  );
+  assert.match(
+    mapData,
+    /sites: \["2F Meeting Room \/ 2F Executive Office", "2F Executive Bedroom \/ 2F Staff Section", "1F Cargo Hold \/ 1F Luggage Hold"\]/,
+  );
   assert.match(mapData, /Nighthaven Labs/i);
   assert.doesNotMatch(atlas + layout, /Always watching|Know the angle|codex-preview|Your site is taking shape/i);
+});
+
+test("publishes admin images atomically without waiting for a Pages deployment", async () => {
+  const [pagesEntry, workflow] = await Promise.all([
+    readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(pagesEntry, /raw\.githubusercontent\.com/);
+  assert.match(pagesEntry, /publishCommit/);
+  assert.match(pagesEntry, /\/git\/trees/);
+  assert.match(pagesEntry, /\/git\/commits/);
+  assert.match(pagesEntry, /\/git\/refs\/heads/);
+  assert.match(workflow, /paths-ignore:/);
+  assert.match(workflow, /public\/uploads\/\*\*/);
+  assert.match(workflow, /data\/images\.json/);
 });
 
 test("ships persistence, original camera pictures, and social artwork", async () => {
