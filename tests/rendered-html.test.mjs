@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
-test("contains the complete Camline atlas experience", async () => {
+test("contains the complete Kyrie Valk Cams atlas experience", async () => {
   const [atlas, layout, mapData, adminRoute] = await Promise.all([
     readFile(new URL("../app/siege-atlas.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -10,7 +10,7 @@ test("contains the complete Camline atlas experience", async () => {
     readFile(new URL("../app/api/admin/session/route.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /Camline — Valkyrie Camera Atlas/i);
+  assert.match(layout, /Kyrie Valk Cams — Valkyrie Camera Atlas/i);
   assert.match(atlas, /Valkyrie<br \/><em>camera spots\.<\/em>/i);
   assert.match(atlas, /Choose your ground/i);
   assert.match(atlas, /top-admin-button/i);
