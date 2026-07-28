@@ -16,7 +16,7 @@ export const maps: SiegeMap[] = [
     released: "Jun 2026",
     category: "Ranked",
     isNew: true,
-    sites: ["2F Cigar Room / Pool", "1F Bar / Betting", "1F Blackjack / Poker", "B CCTV / Vault Checkpoint"],
+    sites: ["2F Cigar Room / 2F Pool", "1F Blackjack / 1F Poker", "1F Bar / 1F Betting", "B CCTV / B Vault Checkpoint"],
   },
   {
     slug: "fortress",
@@ -24,7 +24,7 @@ export const maps: SiegeMap[] = [
     location: "Morocco",
     released: "Reworked 2025",
     category: "Ranked",
-    sites: ["2F Commander / Bedroom", "2F Games / Briefing", "1F Hammam / Dining", "1F Medical / Laundry"],
+    sites: ["2F Bathroom / 2F Commander's Office", "2F Dormitory / 2F Games Room", "1F Hammam / 1F Sitting Room", "1F Waiting Room / 1F Cafeteria"],
   },
   {
     slug: "lair",
@@ -32,7 +32,7 @@ export const maps: SiegeMap[] = [
     location: "Portugal",
     released: "Dec 2023",
     category: "Ranked",
-    sites: ["2F Master Office / R6 Room", "2F Bunks / Briefing", "1F Armory / Weapon Maintenance", "B Lab / Storage"],
+    sites: ["2F Master Office / 2F R6 Room", "1F Bunks / 1F Briefing", "1F Armory / 1F Weapon Maintenance", "B Lab Support / B Lab"],
   },
   {
     slug: "nighthaven-labs",
@@ -40,7 +40,7 @@ export const maps: SiegeMap[] = [
     location: "Singapore",
     released: "Dec 2022",
     category: "Ranked",
-    sites: ["2F Command / Server", "1F Control / Storage", "1F Kitchen / Cafeteria", "B Tank / Assembly"],
+    sites: ["2F Command Center / 2F Servers", "1F Kitchen / 1F Cafeteria", "1F Storage / 1F Control Room", "B Assembly / B Tank"],
   },
   {
     slug: "emerald-plains",
@@ -48,7 +48,7 @@ export const maps: SiegeMap[] = [
     location: "Northern Ireland",
     released: "Apr 2022",
     category: "Standard",
-    sites: ["2F CEO Office / Administration", "2F Painting / Gallery", "1F Kitchen / Dining", "1F Bar / Lounge"],
+    sites: ["2F Administration / 2F CEO Office", "2F Private Gallery / 2F Meeting", "1F Bar / 1F Lounge", "1F Dining / 1F Kitchen"],
   },
   {
     slug: "stadium-bravo",
@@ -56,7 +56,7 @@ export const maps: SiegeMap[] = [
     location: "Greece",
     released: "Sep 2022",
     category: "Standard",
-    sites: ["2F Armory / Archives", "2F Penthouse / Theater", "1F Kitchen / Service", "B Workshop / Ventilation"],
+    sites: ["2F Armory / 2F Archives", "2F VIP / 2F Penthouse", "1F Kitchen / 1F Service", "1F Server / 1F Showers"],
   },
   {
     slug: "stadium-alpha",
@@ -64,7 +64,7 @@ export const maps: SiegeMap[] = [
     location: "Greece",
     released: "Jun 2020",
     category: "Standard",
-    sites: ["2F Office / Meeting", "2F Bedroom / Bathroom", "1F Kitchen / Dining", "1F Piano / Living"],
+    sites: ["2F Office / 2F Target Room", "2F Kids' Dormitory / 2F Dormitory", "1F Kitchen / 1F Dining Room", "1F Piano Room / 1F Living Room"],
   },
   {
     slug: "bank",
@@ -72,7 +72,7 @@ export const maps: SiegeMap[] = [
     location: "Los Angeles, California",
     released: "Dec 2015",
     category: "Ranked",
-    sites: ["2F CEO Office / Executive Lounge", "1F Staff Room / Open Area", "1F Tellers / Archives", "B Lockers / CCTV"],
+    sites: ["2F Executive Lounge / 2F CEO Office", "1F Staff Room / 1F Open Area", "1F Tellers' Office / 1F Archives", "B Lockers / B CCTV Room"],
   },
   {
     slug: "border",
@@ -80,7 +80,7 @@ export const maps: SiegeMap[] = [
     location: "Middle East",
     released: "May 2016",
     category: "Ranked",
-    sites: ["2F Armory / Archives", "1F Ventilation / Workshop", "1F Bathroom / Tellers", "1F Customs / Supply"],
+    sites: ["2F Armory Lockers / 2F Archives", "1F Ventilation Room / 1F Workshop", "1F Bathroom / 1F Tellers", "1F Customs Inspection / 1F Supply Room"],
   },
   {
     slug: "chalet",
@@ -88,7 +88,7 @@ export const maps: SiegeMap[] = [
     location: "Courchevel, France",
     released: "Dec 2015",
     category: "Ranked",
-    sites: ["2F Master Bedroom / Office", "1F Bar / Gaming", "1F Kitchen / Dining", "B Wine Cellar / Snowmobile"],
+    sites: ["2F Master Bedroom / 2F Office", "1F Bar / 1F Gaming Room", "1F Kitchen / 1F Dining Room", "B Wine Cellar / B Snowmobile Garage"],
   },
   {
     slug: "clubhouse",
@@ -96,7 +96,7 @@ export const maps: SiegeMap[] = [
     location: "Hanover, Germany",
     released: "Dec 2015",
     category: "Ranked",
-    sites: ["2F Gym / Bedroom", "2F CCTV / Cash", "1F Bar / Stage", "B Church / Arsenal"],
+    sites: ["2F Gym / 2F Bedroom", "2F CCTV Room / 2F Cash Room", "1F Bar / 1F Stage", "B Church / B Arsenal Room"],
   },
   {
     slug: "coastline",
@@ -104,7 +104,7 @@ export const maps: SiegeMap[] = [
     location: "Ibiza, Spain",
     released: "Feb 2017",
     category: "Standard",
-    sites: ["2F Penthouse / Theater", "2F Hookah / Billiards", "1F Kitchen / Service", "1F Blue Bar / Sunrise"],
+    sites: ["2F Penthouse / 2F Theater", "2F Hookah Lounge / 2F Billiards Room", "1F Kitchen / 1F Reception", "1F Blue Bar / 1F Sunrise Bar"],
   },
   {
     slug: "consulate",
@@ -112,7 +112,7 @@ export const maps: SiegeMap[] = [
     location: "Abidjan, Ivory Coast",
     released: "Reworked 2023",
     category: "Ranked",
-    sites: ["2F Consul Office / Meeting", "1F Lobby / Piano", "1F Exposition / Piano", "B Archives / Tellers"],
+    sites: ["2F Consul Office / 2F Meeting Room", "1F Exposition Room / 1F Piano Room", "1F Tellers / B Servers", "B Cafeteria / B Garage"],
   },
   {
     slug: "kafe-dostoyevsky",
@@ -120,7 +120,7 @@ export const maps: SiegeMap[] = [
     location: "Moscow, Russia",
     released: "Dec 2015",
     category: "Ranked",
-    sites: ["3F Cocktail / Bar", "2F Reading / Fireplace", "2F Mining / Dining", "1F Kitchen / Service"],
+    sites: ["3F Bar / 3F Cocktail Lounge", "2F Fireplace Hall / 2F Mining Room", "2F Reading Room / 2F Fireplace Hall", "1F Kitchen Service / 1F Kitchen Cooking"],
   },
   {
     slug: "kanal",
@@ -128,7 +128,7 @@ export const maps: SiegeMap[] = [
     location: "Hamburg, Germany",
     released: "Aug 2016",
     category: "Ranked",
-    sites: ["2F Server / Radar", "1F Coast Guard / Lounge", "1F Maps / Security", "B Kayaks / Supply"],
+    sites: ["2F Server Room / 2F Radar Room", "1F Security Room / 1F Map Room", "1F Coast Guard Meeting Room / 1F Lounge", "B Kayaks / B Supply Room"],
   },
   {
     slug: "oregon",
@@ -136,7 +136,7 @@ export const maps: SiegeMap[] = [
     location: "Redmond, Oregon",
     released: "Dec 2015",
     category: "Ranked",
-    sites: ["2F Dorms / Kids", "1F Kitchen / Dining", "1F Meeting / Kitchen", "B Laundry / Supply"],
+    sites: ["2F Kids' Dorms / 2F Dorms Main Hall", "1F Kitchen / 1F Dining Hall", "1F Meeting Hall / 1F Kitchen", "B Laundry Room / B Supply Room"],
   },
   {
     slug: "outback",
@@ -144,7 +144,7 @@ export const maps: SiegeMap[] = [
     location: "Australia",
     released: "Mar 2019",
     category: "Standard",
-    sites: ["2F Laundry / Games", "2F Party / Office", "1F Nature / Bushranger", "1F Compressor / Gear"],
+    sites: ["2F Laundry Room / 2F Piano Room", "2F Party Room / 2F Office", "1F Green Bedroom / 1F Red Bedroom", "1F Mechanic Shop / 1F Kitchen"],
   },
   {
     slug: "skyscraper",
@@ -152,7 +152,7 @@ export const maps: SiegeMap[] = [
     location: "Nagoya, Japan",
     released: "Nov 2016",
     category: "Ranked",
-    sites: ["2F Tea / Karaoke", "2F Office / Exhibition", "1F BBQ / Kitchen", "1F Bedroom / Bathroom"],
+    sites: ["2F Tea Room / 2F Karaoke", "2F Exhibition Room / 2F Work Office", "1F Kitchen / 1F BBQ", "1F Bedroom / 1F Bathroom"],
   },
   {
     slug: "theme-park",
@@ -160,7 +160,7 @@ export const maps: SiegeMap[] = [
     location: "Hong Kong",
     released: "Sep 2017",
     category: "Ranked",
-    sites: ["2F Initiation / Office", "2F Bunk / Daycare", "1F Armory / Throne", "1F Lab / Storage"],
+    sites: ["2F Initiation Room / 2F Office", "2F Bunk / 2F Day Care", "1F Armory / 1F Throne Room", "1F Lab / 1F Storage"],
   },
   {
     slug: "villa",
@@ -168,7 +168,7 @@ export const maps: SiegeMap[] = [
     location: "Tuscany, Italy",
     released: "Jun 2018",
     category: "Ranked",
-    sites: ["2F Aviator / Games", "2F Trophy / Statuary", "1F Living / Library", "1F Kitchen / Dining"],
+    sites: ["2F Aviator Room / 2F Games Room", "2F Trophy Room / 2F Statuary Room", "1F Living Room / 1F Library", "1F Dining Room / 1F Kitchen"],
   },
   {
     slug: "favela",
@@ -176,7 +176,7 @@ export const maps: SiegeMap[] = [
     location: "Rio de Janeiro, Brazil",
     released: "Aug 2016",
     category: "Standard",
-    sites: ["2F Coin Farm / Bunks", "2F Packaging / Meth Lab", "1F Grow Room / Lab", "1F Pink Kitchen / Pink Apartment"],
+    sites: ["3F Packaging Room / 2F Meth Lab", "2F Football Bedroom / 2F Football Office", "2F Aunt's Bedroom / 1F Aunt's Apartment", "1F Biker's Apartment / 1F Biker's Bedroom"],
   },
   {
     slug: "hereford-base",
@@ -184,7 +184,7 @@ export const maps: SiegeMap[] = [
     location: "Herefordshire, England",
     released: "Reworked 2018",
     category: "Standard",
-    sites: ["3F Tractor / Ammo", "2F Master / Kids", "1F Kitchen / Dining", "B Brewery / Fermentation"],
+    sites: ["3F Ammo Storage / 3F Tractor Storage", "2F Master Bedroom / 2F Kids Room", "1F Dining Room / 1F Kitchen", "B Fermentation Chamber / B Brewery"],
   },
   {
     slug: "house",
@@ -192,7 +192,7 @@ export const maps: SiegeMap[] = [
     location: "Los Angeles, California",
     released: "Reworked 2020",
     category: "Standard",
-    sites: ["2F Master / Office", "2F Kids / Workshop", "1F Living / Training", "B Garage / Gym"],
+    sites: ["2F Pink Room / 2F Car Room", "2F Master Bedroom / 2F Car Room", "1F TV Room / 1F Music Room", "B Gym / B Garage"],
   },
   {
     slug: "presidential-plane",
@@ -200,7 +200,7 @@ export const maps: SiegeMap[] = [
     location: "Heathrow, England",
     released: "Dec 2015",
     category: "Standard",
-    sites: ["3F Executive / Meeting", "2F Staff / Press", "2F Luggage / Service", "1F Cargo / Storage"],
+    sites: ["2F Meeting Room / 2F Executive Office", "2F Executive Bedroom / 2F Staff Section", "1F Cargo Hold / 1F Luggage Hold"],
   },
   {
     slug: "tower",
@@ -208,7 +208,7 @@ export const maps: SiegeMap[] = [
     location: "Seoul, South Korea",
     released: "Dec 2017",
     category: "Standard",
-    sites: ["2F Exhibit / Office", "2F Gift Shop / Lantern", "1F Tea / Bar", "1F Restaurant / Bird"],
+    sites: ["2F Gift Shop / 2F Lantern Room", "2F Exhibit Room / 2F Media Center", "1F Tea Room / 1F Bar", "1F Restaurant / 1F Bird Room"],
   },
   {
     slug: "yacht",
@@ -216,6 +216,6 @@ export const maps: SiegeMap[] = [
     location: "Baffin Bay",
     released: "Feb 2016",
     category: "Standard",
-    sites: ["4F Cockpit / Maps", "3F Casino / Bedroom", "2F Kitchen / Engine", "1F Server / Storage"],
+    sites: ["4F Cockpit / 4F Maps Room", "2F Kitchen / 2F Engine Control", "2F Cafeteria / 2F Staff Dormitory", "1F Server Room / 1F Storage Room"],
   },
 ];

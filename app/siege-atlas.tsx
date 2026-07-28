@@ -70,9 +70,9 @@ const originalSiteGroups: Record<string, Array<number | null>> = {
   chalet: [3, 1, 2, 0],
   clubhouse: [3, 2, 1, 0],
   coastline: [2, 3, 1, 0],
-  consulate: [3, 2, null, 1],
+  consulate: [3, 2, 1, 0],
   "kafe-dostoyevsky": [3, 1, 2, 0],
-  kanal: [3, 1, 2, 0],
+  kanal: [3, 2, 1, 0],
   oregon: [3, 1, 2, 0],
   outback: [3, 2, 1, 0],
   "theme-park": [3, 2, 1, 0],
@@ -131,9 +131,12 @@ export function SiegeAtlas() {
   }, []);
 
   useEffect(() => {
-    void refreshImages();
+    const initialTimer = window.setTimeout(() => void refreshImages(), 0);
     const timer = window.setInterval(refreshImages, 5000);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(timer);
+    };
   }, [refreshImages]);
 
   const filteredMaps = useMemo(() => {
@@ -258,7 +261,6 @@ export function SiegeAtlas() {
       if (result.image) {
         setImages((current) => ({ ...current, [targetId]: result.image! }));
       }
-      await refreshImages();
       setNotice(
         `${uploadTarget.map.name} · ${uploadTarget.map.sites[uploadTarget.siteIndex]} · Camera ${uploadTarget.cameraIndex + 1} updated live.`
       );
@@ -287,7 +289,11 @@ export function SiegeAtlas() {
         }
         throw new Error(result.error ?? "Could not remove image.");
       }
-      await refreshImages();
+      setImages((current) => {
+        const updated = { ...current };
+        delete updated[targetId];
+        return updated;
+      });
       setNotice(
         originalImage(map, siteIndex, cameraIndex)
           ? `${map.name} custom image cleared; the original camera picture is restored.`
