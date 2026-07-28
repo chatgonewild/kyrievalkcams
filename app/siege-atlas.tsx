@@ -15,12 +15,15 @@ type ImageRecord = {
 function isGitHubPages() {
   return (
     typeof window !== "undefined" &&
-    Boolean((window as Window & { __CAMLINE_GITHUB_PAGES__?: boolean }).__CAMLINE_GITHUB_PAGES__)
+    Boolean(
+      (window as Window & { __KYRIE_VALK_CAMS_GITHUB_PAGES__?: boolean })
+        .__KYRIE_VALK_CAMS_GITHUB_PAGES__,
+    )
   );
 }
 
 function publicAsset(path: string) {
-  return isGitHubPages() ? `/camline-valkyrie-atlas/public${path}` : path;
+  return isGitHubPages() ? `/kyrievalkcams/public${path}` : path;
 }
 
 type UploadTarget = {
@@ -366,9 +369,9 @@ export function SiegeAtlas() {
       )}
 
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Camline home" onClick={() => setMode("browse")}>
+        <a className="brand" href="#top" aria-label="Kyrie Valk Cams home" onClick={() => setMode("browse")}>
           <span className="brand-mark"><span /></span>
-          <span>CAMLINE</span>
+          <span>KYRIE VALK CAMS</span>
           <small>Valkyrie camera atlas</small>
         </a>
         <button className="top-admin-button" onClick={() => void (mode === "admin" ? signOut() : openAdmin())}>
@@ -654,7 +657,7 @@ export function SiegeAtlas() {
       <footer>
         <div className="brand compact-brand">
           <span className="brand-mark"><span /></span>
-          <span>CAMLINE</span>
+          <span>KYRIE VALK CAMS</span>
         </div>
         <p>Made by Kyrie2781</p>
         <button onClick={() => void openAdmin()}>Admin panel ↗</button>

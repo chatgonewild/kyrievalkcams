@@ -6,7 +6,7 @@ type AdminEnv = {
   ADMIN_SESSION_SECRET?: string;
 };
 
-const cookieName = "camline_admin";
+const cookieName = "kyrievalkcams_admin";
 const sessionLifetimeMs = 12 * 60 * 60 * 1000;
 const encoder = new TextEncoder();
 

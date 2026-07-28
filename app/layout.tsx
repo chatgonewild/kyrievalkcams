@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Camline — Valkyrie Camera Atlas";
+  const title = "Kyrie Valk Cams — Valkyrie Camera Atlas";
   const description = "A live visual library for Valkyrie Black Eye camera positions across Rainbow Six Siege maps and bomb sites.";
 
   return {
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: new URL("/og.png", origin).toString(), width: 1731, height: 909, alt: "Camline Valkyrie Camera Atlas" }],
+      images: [{ url: new URL("/og.png", origin).toString(), width: 1731, height: 909, alt: "Kyrie Valk Cams camera atlas" }],
     },
     twitter: {
       card: "summary_large_image",
