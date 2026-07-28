@@ -233,13 +233,16 @@ export function SiegeAtlas() {
 
     try {
       const response = await fetch("/api/images", { method: "POST", body: form });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; image?: ImageRecord };
       if (!response.ok) {
         if (response.status === 401) {
           setMode("browse");
           setLoginOpen(true);
         }
         throw new Error(result.error ?? "Upload failed.");
+      }
+      if (result.image) {
+        setImages((current) => ({ ...current, [targetId]: result.image! }));
       }
       await refreshImages();
       setNotice(
