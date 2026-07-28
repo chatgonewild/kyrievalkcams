@@ -1,8 +1,8 @@
-# Camline deployment
+# Kyrie Valk Cams deployment
 
 The public production site is:
 
-https://chatgonewild.github.io/camline-valkyrie-atlas/
+https://chatgonewild.github.io/kyrievalkcams/
 
 GitHub is the source of truth. For user-facing changes:
 
