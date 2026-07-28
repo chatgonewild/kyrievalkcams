@@ -24,11 +24,31 @@ type GitHubContent = {
   sha?: string;
 };
 
+type GitHubRef = {
+  object?: { sha?: string };
+};
+
+type GitHubCommit = {
+  sha?: string;
+  tree?: { sha?: string };
+};
+
+type GitHubObject = {
+  sha?: string;
+};
+
+type GitTreeEntry = {
+  path: string;
+  mode: "100644";
+  type: "blob";
+  sha: string | null;
+};
+
 const owner = "chatgonewild";
 const repo = "kyrievalkcams";
 const branch = "main";
-const pagesBase = `https://${owner}.github.io/${repo}/`;
 const apiBase = `https://api.github.com/repos/${owner}/${repo}`;
+const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
 const originalFetch = window.fetch.bind(window);
 let githubToken = "";
 let githubLogin = "";
@@ -59,14 +79,19 @@ function bytesToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-function textToBase64(text: string) {
-  return bytesToBase64(new TextEncoder().encode(text));
-}
-
 function base64ToText(value: string) {
   const binary = atob(value.replace(/\s/g, ""));
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return new TextDecoder().decode(bytes);
+}
+
+class GitHubApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
 }
 
 async function githubRequest(path: string, init: RequestInit = {}, token = githubToken) {
@@ -76,53 +101,140 @@ async function githubRequest(path: string, init: RequestInit = {}, token = githu
   });
   if (!response.ok) {
     const detail = (await response.json().catch(() => ({}))) as { message?: string };
-    throw new Error(detail.message ?? `GitHub returned ${response.status}.`);
+    throw new GitHubApiError(detail.message ?? `GitHub returned ${response.status}.`, response.status);
   }
   return response;
 }
 
 async function readRepositoryImages() {
-  const response = await originalFetch(`${pagesBase}data/images.json?t=${Date.now()}`, {
+  const response = await originalFetch(`${rawBase}data/images.json?t=${Date.now()}`, {
     cache: "no-store",
   });
   if (response.status === 404) return [] as StoredImage[];
   if (!response.ok) throw new Error("Could not load the live image library.");
   const data = (await response.json()) as { images?: StoredImage[] };
-  return Array.isArray(data.images) ? data.images : [];
+  return normalizeStoredImages(data.images);
 }
 
-async function readContent(path: string) {
-  const response = await githubRequest(`/contents/${encodeURIComponent(path).replace(/%2F/g, "/")}?ref=${branch}`);
+function normalizeStoredImages(images?: StoredImage[]) {
+  if (!Array.isArray(images)) return [] as StoredImage[];
+  return images.map((image) => ({
+    ...image,
+    url: image.repoPath ? `${rawBase}${image.repoPath}` : image.url,
+  }));
+}
+
+async function readContent(path: string, ref = branch) {
+  const response = await githubRequest(
+    `/contents/${encodeURIComponent(path).replace(/%2F/g, "/")}?ref=${encodeURIComponent(ref)}`,
+  );
   return (await response.json()) as GitHubContent;
 }
 
-async function writeContent(path: string, content: string, message: string, sha?: string) {
-  const response = await githubRequest(`/contents/${encodeURIComponent(path).replace(/%2F/g, "/")}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, content, branch, ...(sha ? { sha } : {}) }),
+async function repositoryImageDocument(ref = branch) {
+  const current = await readContent("data/images.json", ref).catch((error) => {
+    if (error instanceof GitHubApiError && error.status === 404) return null;
+    throw error;
   });
-  return response.json();
-}
-
-async function deleteContent(path: string, message: string) {
-  const current = await readContent(path).catch(() => null);
-  if (!current?.sha) return;
-  await githubRequest(`/contents/${encodeURIComponent(path).replace(/%2F/g, "/")}`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, sha: current.sha, branch }),
-  });
-}
-
-async function repositoryImageDocument() {
-  const current = await readContent("data/images.json").catch(() => null);
-  if (!current?.content) return { images: [] as StoredImage[], sha: undefined as string | undefined };
+  if (!current?.content) return [] as StoredImage[];
   const parsed = JSON.parse(base64ToText(current.content)) as { images?: StoredImage[] };
-  return {
-    images: Array.isArray(parsed.images) ? parsed.images : [],
-    sha: current.sha,
-  };
+  return normalizeStoredImages(parsed.images);
+}
+
+async function createBlob(content: string, encoding: "base64" | "utf-8") {
+  const response = await githubRequest("/git/blobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, encoding }),
+  });
+  const result = (await response.json()) as GitHubObject;
+  if (!result.sha) throw new Error("GitHub did not create the image data.");
+  return result.sha;
+}
+
+async function branchSnapshot() {
+  const refResponse = await githubRequest(`/git/ref/heads/${encodeURIComponent(branch)}`);
+  const ref = (await refResponse.json()) as GitHubRef;
+  const headSha = ref.object?.sha;
+  if (!headSha) throw new Error("Could not read the current GitHub branch.");
+
+  const [commitResponse, images] = await Promise.all([
+    githubRequest(`/git/commits/${headSha}`),
+    repositoryImageDocument(headSha),
+  ]);
+  const commit = (await commitResponse.json()) as GitHubCommit;
+  const treeSha = commit.tree?.sha;
+  if (!treeSha) throw new Error("Could not read the current GitHub file tree.");
+  return { headSha, treeSha, images };
+}
+
+async function publishCommit(
+  snapshot: Awaited<ReturnType<typeof branchSnapshot>>,
+  images: StoredImage[],
+  entries: GitTreeEntry[],
+  message: string,
+) {
+  const manifestSha = await createBlob(`${JSON.stringify({ images }, null, 2)}\n`, "utf-8");
+  const treeResponse = await githubRequest("/git/trees", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      base_tree: snapshot.treeSha,
+      tree: [
+        ...entries,
+        {
+          path: "data/images.json",
+          mode: "100644",
+          type: "blob",
+          sha: manifestSha,
+        },
+      ],
+    }),
+  });
+  const tree = (await treeResponse.json()) as GitHubObject;
+  if (!tree.sha) throw new Error("GitHub did not create the updated file tree.");
+
+  const commitResponse = await githubRequest("/git/commits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      tree: tree.sha,
+      parents: [snapshot.headSha],
+    }),
+  });
+  const commit = (await commitResponse.json()) as GitHubCommit;
+  if (!commit.sha) throw new Error("GitHub did not create the camera update.");
+
+  await githubRequest(`/git/refs/heads/${encodeURIComponent(branch)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sha: commit.sha, force: false }),
+  });
+}
+
+async function publishImageUpdate(
+  build: (images: StoredImage[]) => {
+    images: StoredImage[];
+    entries: GitTreeEntry[];
+    message: string;
+  },
+) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const snapshot = await branchSnapshot();
+    const update = build(snapshot.images);
+    try {
+      await publishCommit(snapshot, update.images, update.entries, update.message);
+      return;
+    } catch (error) {
+      lastError = error;
+      const branchChanged =
+        error instanceof GitHubApiError && (error.status === 409 || error.status === 422);
+      if (!branchChanged || attempt === 1) throw error;
+    }
+  }
+  throw lastError;
 }
 
 async function signInWithGitHub(request: Request) {
@@ -188,10 +300,6 @@ async function uploadImage(request: Request) {
       "img");
   const repoPath = `public/uploads/${mapSlug}-${siteIndex}-${Date.now()}.${extension}`;
   const imageBytes = new Uint8Array(await file.arrayBuffer());
-  await writeContent(repoPath, bytesToBase64(imageBytes), `Update ${slotId} camera image`);
-
-  const document = await repositoryImageDocument();
-  const previous = document.images.find((image) => image.slotId === slotId);
   const updatedAt = new Date().toISOString();
   const image: StoredImage = {
     slotId,
@@ -200,18 +308,23 @@ async function uploadImage(request: Request) {
     originalName: file.name.slice(0, 180),
     updatedAt,
     repoPath,
-    url: `${pagesBase}${repoPath}`,
+    url: `${rawBase}${repoPath}`,
   };
-  const images = [image, ...document.images.filter((entry) => entry.slotId !== slotId)];
-  await writeContent(
-    "data/images.json",
-    textToBase64(`${JSON.stringify({ images }, null, 2)}\n`),
-    `Publish ${slotId} camera update`,
-    document.sha,
-  );
-  if (previous?.repoPath && previous.repoPath !== repoPath) {
-    await deleteContent(previous.repoPath, `Remove replaced ${slotId} camera image`).catch(() => undefined);
-  }
+  const imageSha = await createBlob(bytesToBase64(imageBytes), "base64");
+  await publishImageUpdate((images) => {
+    const previous = images.find((entry) => entry.slotId === slotId);
+    const entries: GitTreeEntry[] = [
+      { path: repoPath, mode: "100644", type: "blob", sha: imageSha },
+    ];
+    if (previous?.repoPath && previous.repoPath !== repoPath) {
+      entries.push({ path: previous.repoPath, mode: "100644", type: "blob", sha: null });
+    }
+    return {
+      images: [image, ...images.filter((entry) => entry.slotId !== slotId)],
+      entries,
+      message: `Publish ${slotId} camera update`,
+    };
+  });
   return jsonResponse({ ok: true, image }, 201);
 }
 
@@ -221,18 +334,16 @@ async function removeImage(request: Request) {
   if (!/^[a-z0-9-]+:\d+$/.test(slotId)) {
     return jsonResponse({ error: "Invalid image slot." }, 400);
   }
-  const document = await repositoryImageDocument();
-  const previous = document.images.find((image) => image.slotId === slotId);
-  const images = document.images.filter((image) => image.slotId !== slotId);
-  await writeContent(
-    "data/images.json",
-    textToBase64(`${JSON.stringify({ images }, null, 2)}\n`),
-    `Clear ${slotId} camera image`,
-    document.sha,
-  );
-  if (previous?.repoPath) {
-    await deleteContent(previous.repoPath, `Remove ${slotId} camera image`).catch(() => undefined);
-  }
+  await publishImageUpdate((images) => {
+    const previous = images.find((image) => image.slotId === slotId);
+    return {
+      images: images.filter((image) => image.slotId !== slotId),
+      entries: previous?.repoPath
+        ? [{ path: previous.repoPath, mode: "100644", type: "blob", sha: null }]
+        : [],
+      message: `Clear ${slotId} camera image`,
+    };
+  });
   return jsonResponse({ ok: true });
 }
 
