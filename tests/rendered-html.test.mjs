@@ -50,9 +50,10 @@ test("publishes admin images atomically without waiting for a Pages deployment",
 });
 
 test("remembers the GitHub Pages admin session and serializes uploads", async () => {
-  const [pagesEntry, atlas] = await Promise.all([
+  const [pagesEntry, atlas, pagesConfig] = await Promise.all([
     readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/siege-atlas.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../github-pages/vite.config.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(pagesEntry, /savedSessionKey/);
@@ -65,6 +66,7 @@ test("remembers the GitHub Pages admin session and serializes uploads", async ()
   assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
   assert.match(atlas, /refreshVersionRef/);
   assert.match(atlas, /refreshVersion !== refreshVersionRef\.current/);
+  assert.match(pagesConfig, /entryFileNames: "static\/app-\[hash\]\.js"/);
 });
 
 test("ships persistence, original camera pictures, and social artwork", async () => {
