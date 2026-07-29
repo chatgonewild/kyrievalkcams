@@ -117,6 +117,7 @@ export function SiegeAtlas() {
   const [loginError, setLoginError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const refreshVersionRef = useRef(0);
 
@@ -141,6 +142,20 @@ export function SiegeAtlas() {
       window.clearInterval(timer);
     };
   }, [refreshImages]);
+
+  useEffect(() => {
+    if (!previewImage) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewImage(null);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [previewImage]);
 
   const filteredMaps = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -242,37 +257,49 @@ export function SiegeAtlas() {
     fileRef.current?.click();
   }
 
-  async function upload(file: File) {
-    if (!uploadTarget) return;
+  async function upload(files: File[]) {
+    if (!uploadTarget || files.length === 0) return;
     const target = uploadTarget;
-    const targetId = slotId(target.map, target.siteIndex, target.cameraIndex);
+    const queue = files.slice(0, camerasPerSite - target.cameraIndex);
     setUploadTarget(null);
     refreshVersionRef.current += 1;
-    setBusy(targetId);
-    setNotice("");
-    const form = new FormData();
-    form.set("mapSlug", target.map.slug);
-    form.set("siteIndex", String(combinedIndex(target.siteIndex, target.cameraIndex)));
-    form.set("file", file);
+    let completed = 0;
 
     try {
-      const response = await fetch("/api/images", { method: "POST", body: form });
-      const result = (await response.json()) as { error?: string; image?: ImageRecord };
-      if (!response.ok) {
-        if (response.status === 401) {
-          setMode("browse");
-          setLoginOpen(true);
+      for (const [index, file] of queue.entries()) {
+        const cameraIndex = target.cameraIndex + index;
+        const targetId = slotId(target.map, target.siteIndex, cameraIndex);
+        setBusy(targetId);
+        setNotice(
+          queue.length > 1
+            ? `Uploading camera ${index + 1} of ${queue.length}…`
+            : `Uploading ${target.map.name} · ${target.map.sites[target.siteIndex]} · Camera ${cameraIndex + 1}…`,
+        );
+        const form = new FormData();
+        form.set("mapSlug", target.map.slug);
+        form.set("siteIndex", String(combinedIndex(target.siteIndex, cameraIndex)));
+        form.set("file", file);
+
+        const response = await fetch("/api/images", { method: "POST", body: form });
+        const result = (await response.json()) as { error?: string; image?: ImageRecord };
+        if (!response.ok) {
+          if (response.status === 401) {
+            setMode("browse");
+            setLoginOpen(true);
+          }
+          throw new Error(result.error ?? "Upload failed.");
         }
-        throw new Error(result.error ?? "Upload failed.");
-      }
-      if (result.image) {
-        setImages((current) => ({ ...current, [targetId]: result.image! }));
+        if (result.image) {
+          setImages((current) => ({ ...current, [targetId]: result.image! }));
+        }
+        completed += 1;
       }
       setNotice(
-        `${target.map.name} · ${target.map.sites[target.siteIndex]} · Camera ${target.cameraIndex + 1} updated live.`
+        `${target.map.name} · ${target.map.sites[target.siteIndex]} · ${completed} camera image${completed === 1 ? "" : "s"} updated live.`,
       );
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Upload failed.");
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setNotice(completed ? `${completed} image${completed === 1 ? "" : "s"} uploaded. ${message}` : message);
     } finally {
       setBusy("");
       if (fileRef.current) fileRef.current.value = "";
@@ -320,12 +347,40 @@ export function SiegeAtlas() {
         className="sr-only"
         type="file"
         accept="image/jpeg,image/png,image/webp,image/avif"
+        multiple
         aria-label="Choose a camera image"
         onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void upload(file);
+          const files = Array.from(event.target.files ?? []);
+          if (files.length) void upload(files);
         }}
       />
+
+      {previewImage && (
+        <div
+          className="image-viewer-overlay"
+          role="presentation"
+          onMouseDown={() => setPreviewImage(null)}
+        >
+          <section
+            className="image-viewer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Full-size camera image"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              className="image-viewer-close"
+              aria-label="Close full-size image"
+              autoFocus
+              onClick={() => setPreviewImage(null)}
+            >
+              ×
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewImage.src} alt={previewImage.alt} />
+          </section>
+        </div>
+      )}
 
       {loginOpen && (
         <div className="login-overlay" role="presentation" onMouseDown={() => setLoginOpen(false)}>
@@ -556,11 +611,22 @@ export function SiegeAtlas() {
                         return (
                           <div className="image-slot" key={cameraIndex}>
                             {image.src ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={image.src}
-                                alt={`${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`}
-                              />
+                              <button
+                                className="image-open"
+                                aria-label={`View ${selectedMap.name} ${site} camera ${cameraIndex + 1} full size`}
+                                onClick={() =>
+                                  setPreviewImage({
+                                    src: image.src!,
+                                    alt: `${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`,
+                                  })
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={image.src}
+                                  alt={`${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`}
+                                />
+                              </button>
                             ) : (
                               <div className="empty-slot">
                                 <CameraGlyph />
@@ -629,8 +695,19 @@ export function SiegeAtlas() {
                             <div className="admin-site-row" key={cameraIndex}>
                               <div className="admin-thumb">
                                 {image.src ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={image.src} alt="" />
+                                  <button
+                                    className="image-open"
+                                    aria-label={`View ${map.name} ${site} camera ${cameraIndex + 1} full size`}
+                                    onClick={() =>
+                                      setPreviewImage({
+                                        src: image.src!,
+                                        alt: `${map.name} ${site} Valkyrie camera position ${cameraIndex + 1}`,
+                                      })
+                                    }
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={image.src} alt="" />
+                                  </button>
                                 ) : (
                                   <CameraGlyph />
                                 )}

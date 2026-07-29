@@ -66,6 +66,10 @@ test("remembers the GitHub Pages admin session and serializes uploads", async ()
   assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
   assert.match(atlas, /refreshVersionRef/);
   assert.match(atlas, /refreshVersion !== refreshVersionRef\.current/);
+  assert.match(atlas, /multiple/);
+  assert.match(atlas, /Uploading camera \$\{index \+ 1\} of \$\{queue\.length\}/);
+  assert.match(atlas, /image-viewer-overlay/);
+  assert.match(atlas, /event\.key === "Escape"/);
   assert.match(pagesConfig, /entryFileNames: "static\/app-\[hash\]\.js"/);
 });
 
