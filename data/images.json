@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "slotId": "calypso-casino:10",
+      "mapSlug": "calypso-casino",
+      "siteIndex": 10,
+      "originalName": "34716240-08CD-4369-B8CD-4823BD450CBC.jpeg",
+      "updatedAt": "2026-07-29T17:50:40.596Z",
+      "repoPath": "public/uploads/calypso-casino-10-1785347440594.jpeg",
+      "url": "https://raw.githubusercontent.com/chatgonewild/kyrievalkcams/main/public/uploads/calypso-casino-10-1785347440594.jpeg"
+    },
+    {
       "slotId": "calypso-casino:9",
       "mapSlug": "calypso-casino",
       "siteIndex": 9,
