@@ -62,6 +62,7 @@ test("remembers the GitHub Pages admin session and serializes uploads", async ()
   assert.match(pagesEntry, /restoreSavedSession\(\)/);
   assert.match(pagesEntry, /await ensureGitHubSession\(\)/);
   assert.match(pagesEntry, /if \(githubToken\) \{\s+return repositoryImageDocument\(\)/);
+  assert.match(pagesEntry, /cache: init\.cache \?\? "no-store"/);
   assert.match(atlas, /This browser remembers it for 30 days/);
   assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
   assert.match(atlas, /refreshVersionRef/);

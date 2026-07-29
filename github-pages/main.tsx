@@ -153,6 +153,7 @@ class GitHubApiError extends Error {
 async function githubRequest(path: string, init: RequestInit = {}, token = githubToken) {
   const response = await originalFetch(`${apiBase}${path}`, {
     ...init,
+    cache: init.cache ?? "no-store",
     headers: { ...apiHeaders(token), ...(init.headers ?? {}) },
   });
   if (!response.ok) {
