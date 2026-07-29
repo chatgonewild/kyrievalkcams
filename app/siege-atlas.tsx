@@ -118,12 +118,15 @@ export function SiegeAtlas() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const refreshVersionRef = useRef(0);
 
   const refreshImages = useCallback(async () => {
+    const refreshVersion = refreshVersionRef.current;
     try {
       const response = await fetch("/api/images", { cache: "no-store" });
       if (!response.ok) return;
       const data = (await response.json()) as { images: ImageRecord[] };
+      if (refreshVersion !== refreshVersionRef.current) return;
       setImages(Object.fromEntries(data.images.map((image) => [image.slotId, image])));
     } catch {
       // The empty library is the intended first-run state.
@@ -244,6 +247,7 @@ export function SiegeAtlas() {
     const target = uploadTarget;
     const targetId = slotId(target.map, target.siteIndex, target.cameraIndex);
     setUploadTarget(null);
+    refreshVersionRef.current += 1;
     setBusy(targetId);
     setNotice("");
     const form = new FormData();
@@ -277,6 +281,7 @@ export function SiegeAtlas() {
 
   async function removeImage(map: SiegeMap, siteIndex: number, cameraIndex: number) {
     const targetId = slotId(map, siteIndex, cameraIndex);
+    refreshVersionRef.current += 1;
     setBusy(targetId);
     setNotice("");
     try {

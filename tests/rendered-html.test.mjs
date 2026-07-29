@@ -63,6 +63,8 @@ test("remembers the GitHub Pages admin session and serializes uploads", async ()
   assert.match(pagesEntry, /if \(githubToken\) \{\s+return repositoryImageDocument\(\)/);
   assert.match(atlas, /This browser remembers it for 30 days/);
   assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
+  assert.match(atlas, /refreshVersionRef/);
+  assert.match(atlas, /refreshVersion !== refreshVersionRef\.current/);
 });
 
 test("ships persistence, original camera pictures, and social artwork", async () => {
