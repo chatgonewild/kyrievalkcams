@@ -163,6 +163,9 @@ async function githubRequest(path: string, init: RequestInit = {}, token = githu
 }
 
 async function readRepositoryImages() {
+  if (githubToken) {
+    return repositoryImageDocument();
+  }
   const response = await originalFetch(`${rawBase}data/images.json?t=${Date.now()}`, {
     cache: "no-store",
   });
