@@ -44,16 +44,72 @@ type GitTreeEntry = {
   sha: string | null;
 };
 
+type SavedGitHubSession = {
+  username: string;
+  token: string;
+  expiresAt: number;
+};
+
 const owner = "chatgonewild";
 const repo = "kyrievalkcams";
 const branch = "main";
 const apiBase = `https://api.github.com/repos/${owner}/${repo}`;
 const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+const savedSessionKey = "kyrievalkcams.github-admin.v1";
+const savedSessionMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
 const originalFetch = window.fetch.bind(window);
 let githubToken = "";
 let githubLogin = "";
+let sessionValidation: Promise<boolean> | undefined;
 
 window.__KYRIE_VALK_CAMS_GITHUB_PAGES__ = true;
+
+function clearSavedSession() {
+  try {
+    localStorage.removeItem(savedSessionKey);
+  } catch {
+    // Signing out still clears the in-memory token when browser storage is unavailable.
+  }
+  githubToken = "";
+  githubLogin = "";
+  sessionValidation = undefined;
+}
+
+function persistSavedSession(username: string, token: string) {
+  const saved: SavedGitHubSession = {
+    username,
+    token,
+    expiresAt: Date.now() + savedSessionMaxAgeMs,
+  };
+  try {
+    localStorage.setItem(savedSessionKey, JSON.stringify(saved));
+  } catch {
+    // Private browsing policies may limit storage; the current tab still stays signed in.
+  }
+}
+
+function restoreSavedSession() {
+  try {
+    const raw = localStorage.getItem(savedSessionKey);
+    if (!raw) return;
+    const saved = JSON.parse(raw) as Partial<SavedGitHubSession>;
+    if (
+      saved.username?.toLowerCase() !== owner ||
+      !saved.token?.startsWith("github_pat_") ||
+      typeof saved.expiresAt !== "number" ||
+      saved.expiresAt <= Date.now()
+    ) {
+      clearSavedSession();
+      return;
+    }
+    githubLogin = saved.username;
+    githubToken = saved.token;
+  } catch {
+    clearSavedSession();
+  }
+}
+
+restoreSavedSession();
 
 function jsonResponse(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), {
@@ -237,20 +293,15 @@ async function publishImageUpdate(
   throw lastError;
 }
 
-async function signInWithGitHub(request: Request) {
-  const body = (await request.json()) as { username?: string; password?: string };
-  const username = body.username?.trim() ?? "";
-  const token = body.password?.trim() ?? "";
-  if (!username || !token) return jsonResponse({ error: "Enter your GitHub username and token." }, 400);
-
+async function validatedGitHubLogin(username: string, token: string) {
   const userResponse = await originalFetch("https://api.github.com/user", {
     headers: apiHeaders(token),
     cache: "no-store",
   });
-  if (!userResponse.ok) return jsonResponse({ error: "GitHub rejected that token." }, 401);
+  if (!userResponse.ok) throw new GitHubApiError("GitHub rejected that token.", 401);
   const user = (await userResponse.json()) as { login?: string };
   if (user.login?.toLowerCase() !== username.toLowerCase() || user.login?.toLowerCase() !== owner) {
-    return jsonResponse({ error: `This editor is restricted to @${owner}.` }, 403);
+    throw new GitHubApiError(`This editor is restricted to @${owner}.`, 403);
   }
 
   const repositoryResponse = await originalFetch(`${apiBase}`, {
@@ -261,19 +312,55 @@ async function signInWithGitHub(request: Request) {
     permissions?: { push?: boolean };
   };
   if (!repositoryResponse.ok || !repository.permissions?.push) {
-    return jsonResponse(
-      { error: "The token needs Contents read/write access to this repository." },
+    throw new GitHubApiError(
+      "The token needs Contents read/write access to this repository.",
       403,
     );
   }
+  return user.login ?? username;
+}
 
+async function ensureGitHubSession() {
+  if (!githubToken || !githubLogin) return false;
+  sessionValidation ??= validatedGitHubLogin(githubLogin, githubToken)
+    .then((login) => {
+      githubLogin = login;
+      persistSavedSession(githubLogin, githubToken);
+      return true;
+    })
+    .catch(() => {
+      clearSavedSession();
+      return false;
+    });
+  return sessionValidation;
+}
+
+async function signInWithGitHub(request: Request) {
+  const body = (await request.json()) as { username?: string; password?: string };
+  const username = body.username?.trim() ?? "";
+  const token = body.password?.trim() ?? "";
+  if (!username || !token) return jsonResponse({ error: "Enter your GitHub username and token." }, 400);
+
+  try {
+    githubLogin = await validatedGitHubLogin(username, token);
+  } catch (error) {
+    clearSavedSession();
+    const status = error instanceof GitHubApiError ? error.status : 401;
+    return jsonResponse(
+      { error: error instanceof Error ? error.message : "GitHub rejected that token." },
+      status,
+    );
+  }
   githubToken = token;
-  githubLogin = user.login ?? username;
+  sessionValidation = Promise.resolve(true);
+  persistSavedSession(githubLogin, githubToken);
   return jsonResponse({ authenticated: true, username: githubLogin });
 }
 
 async function uploadImage(request: Request) {
-  if (!githubToken) return jsonResponse({ error: "Admin sign-in required." }, 401);
+  if (!(await ensureGitHubSession())) {
+    return jsonResponse({ error: "Admin sign-in required." }, 401);
+  }
   const form = await request.formData();
   const mapSlug = String(form.get("mapSlug") ?? "").trim();
   const siteIndex = Number(form.get("siteIndex"));
@@ -329,7 +416,9 @@ async function uploadImage(request: Request) {
 }
 
 async function removeImage(request: Request) {
-  if (!githubToken) return jsonResponse({ error: "Admin sign-in required." }, 401);
+  if (!(await ensureGitHubSession())) {
+    return jsonResponse({ error: "Admin sign-in required." }, 401);
+  }
   const slotId = new URL(request.url, window.location.href).searchParams.get("slotId") ?? "";
   if (!/^[a-z0-9-]+:\d+$/.test(slotId)) {
     return jsonResponse({ error: "Invalid image slot." }, 400);
@@ -353,11 +442,11 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (url.pathname === "/api/admin/session") {
     if (request.method === "POST") return signInWithGitHub(request);
     if (request.method === "DELETE") {
-      githubToken = "";
-      githubLogin = "";
+      clearSavedSession();
       return jsonResponse({ authenticated: false });
     }
-    return jsonResponse({ authenticated: Boolean(githubToken), username: githubLogin || undefined });
+    const authenticated = await ensureGitHubSession();
+    return jsonResponse({ authenticated, username: authenticated ? githubLogin : undefined });
   }
   if (url.pathname === "/api/images") {
     try {

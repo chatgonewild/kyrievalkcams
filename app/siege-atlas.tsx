@@ -234,18 +234,21 @@ export function SiegeAtlas() {
   }
 
   function openUpload(map: SiegeMap, siteIndex: number, cameraIndex: number) {
+    if (busy) return;
     setUploadTarget({ map, siteIndex, cameraIndex });
     fileRef.current?.click();
   }
 
   async function upload(file: File) {
     if (!uploadTarget) return;
-    const targetId = slotId(uploadTarget.map, uploadTarget.siteIndex, uploadTarget.cameraIndex);
+    const target = uploadTarget;
+    const targetId = slotId(target.map, target.siteIndex, target.cameraIndex);
+    setUploadTarget(null);
     setBusy(targetId);
     setNotice("");
     const form = new FormData();
-    form.set("mapSlug", uploadTarget.map.slug);
-    form.set("siteIndex", String(combinedIndex(uploadTarget.siteIndex, uploadTarget.cameraIndex)));
+    form.set("mapSlug", target.map.slug);
+    form.set("siteIndex", String(combinedIndex(target.siteIndex, target.cameraIndex)));
     form.set("file", file);
 
     try {
@@ -262,13 +265,12 @@ export function SiegeAtlas() {
         setImages((current) => ({ ...current, [targetId]: result.image! }));
       }
       setNotice(
-        `${uploadTarget.map.name} · ${uploadTarget.map.sites[uploadTarget.siteIndex]} · Camera ${uploadTarget.cameraIndex + 1} updated live.`
+        `${target.map.name} · ${target.map.sites[target.siteIndex]} · Camera ${target.cameraIndex + 1} updated live.`
       );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setBusy("");
-      setUploadTarget(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -367,7 +369,7 @@ export function SiegeAtlas() {
             {isGitHubPages() && (
               <p className="login-token-note">
                 Use a fine-grained token limited to this repository with Contents read/write access.
-                It stays only in this browser tab.
+                This browser remembers it for 30 days, or until you sign out.
               </p>
             )}
           </section>
@@ -634,13 +636,13 @@ export function SiegeAtlas() {
                                 <small>{image.custom?.originalName ?? (image.src ? "Imported from original site" : "No image uploaded")}</small>
                               </div>
                               <div className="admin-actions">
-                                <button disabled={isBusy} onClick={() => openUpload(map, siteIndex, cameraIndex)}>
+                                <button disabled={Boolean(busy)} onClick={() => openUpload(map, siteIndex, cameraIndex)}>
                                   {isBusy ? "Working…" : image.src ? "Replace" : "Upload"}
                                 </button>
                                 {image.custom && (
                                   <button
                                     className="remove"
-                                    disabled={isBusy}
+                                    disabled={Boolean(busy)}
                                     onClick={() => void removeImage(map, siteIndex, cameraIndex)}
                                   >
                                     Clear

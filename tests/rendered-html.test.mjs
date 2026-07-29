@@ -49,6 +49,21 @@ test("publishes admin images atomically without waiting for a Pages deployment",
   assert.match(workflow, /data\/images\.json/);
 });
 
+test("remembers the GitHub Pages admin session and serializes uploads", async () => {
+  const [pagesEntry, atlas] = await Promise.all([
+    readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/siege-atlas.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(pagesEntry, /savedSessionKey/);
+  assert.match(pagesEntry, /localStorage\.setItem/);
+  assert.match(pagesEntry, /localStorage\.removeItem/);
+  assert.match(pagesEntry, /restoreSavedSession\(\)/);
+  assert.match(pagesEntry, /await ensureGitHubSession\(\)/);
+  assert.match(atlas, /This browser remembers it for 30 days/);
+  assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
+});
+
 test("ships persistence, original camera pictures, and social artwork", async () => {
   const [hosting, migration, originalImages, mapImages, atlas] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
