@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "slotId": "villa:4",
+      "mapSlug": "villa",
+      "siteIndex": 4,
+      "originalName": "20260730155128_1.jpg",
+      "updatedAt": "2026-08-01T12:11:40.699Z",
+      "repoPath": "public/uploads/villa-4-1785586300699.jpg",
+      "url": "https://raw.githubusercontent.com/chatgonewild/kyrievalkcams/main/public/uploads/villa-4-1785586300699.jpg"
+    },
+    {
       "slotId": "calypso-casino:2",
       "mapSlug": "calypso-casino",
       "siteIndex": 2,
