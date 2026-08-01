@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "slotId": "lair:0",
+      "mapSlug": "lair",
+      "siteIndex": 0,
+      "originalName": "20260801081803_1.jpg",
+      "updatedAt": "2026-08-01T12:20:46.123Z",
+      "repoPath": "public/uploads/lair-0-1785586846122.jpg",
+      "url": "https://raw.githubusercontent.com/chatgonewild/kyrievalkcams/main/public/uploads/lair-0-1785586846122.jpg"
+    },
+    {
       "slotId": "oregon:0",
       "mapSlug": "oregon",
       "siteIndex": 0,
