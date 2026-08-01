@@ -437,9 +437,9 @@ export function SiegeAtlas() {
       )}
 
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Kyrie Valk Cams home" onClick={() => setMode("browse")}>
+        <a className="brand" href="#top" aria-label="Camline home" onClick={() => setMode("browse")}>
           <span className="brand-mark"><span /></span>
-          <span>KYRIE VALK CAMS</span>
+          <span>CAMLINE</span>
           <small>Valkyrie camera atlas</small>
         </a>
         <button className="top-admin-button" onClick={() => void (mode === "admin" ? signOut() : openAdmin())}>
@@ -747,7 +747,7 @@ export function SiegeAtlas() {
       <footer>
         <div className="brand compact-brand">
           <span className="brand-mark"><span /></span>
-          <span>KYRIE VALK CAMS</span>
+          <span>CAMLINE</span>
         </div>
         <p>Made by Kyrie2781</p>
         <button onClick={() => void openAdmin()}>Admin panel ↗</button>
