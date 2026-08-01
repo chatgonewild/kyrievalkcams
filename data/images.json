@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "slotId": "oregon:2",
+      "mapSlug": "oregon",
+      "siteIndex": 2,
+      "originalName": "20260730162012_1.jpg",
+      "updatedAt": "2026-08-01T12:12:25.326Z",
+      "repoPath": "public/uploads/oregon-2-1785586345326.jpg",
+      "url": "https://raw.githubusercontent.com/chatgonewild/kyrievalkcams/main/public/uploads/oregon-2-1785586345326.jpg"
+    },
+    {
       "slotId": "villa:4",
       "mapSlug": "villa",
       "siteIndex": 4,
