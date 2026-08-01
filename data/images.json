@@ -1,6 +1,15 @@
 {
   "images": [
     {
+      "slotId": "lair:5",
+      "mapSlug": "lair",
+      "siteIndex": 5,
+      "originalName": "20260801082235_1.jpg",
+      "updatedAt": "2026-08-01T12:23:12.430Z",
+      "repoPath": "public/uploads/lair-5-1785586992430.jpg",
+      "url": "https://raw.githubusercontent.com/chatgonewild/kyrievalkcams/main/public/uploads/lair-5-1785586992430.jpg"
+    },
+    {
       "slotId": "lair:4",
       "mapSlug": "lair",
       "siteIndex": 4,
