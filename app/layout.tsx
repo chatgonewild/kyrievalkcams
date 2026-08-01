@@ -26,6 +26,11 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(origin),
     title,
     description,
+    icons: {
+      icon: [{ url: "/camline-favicon.png", type: "image/png", sizes: "512x512" }],
+      shortcut: "/camline-favicon.png",
+      apple: [{ url: "/camline-mark.png", type: "image/png", sizes: "512x512" }],
+    },
     openGraph: {
       title,
       description,

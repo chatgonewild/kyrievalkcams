@@ -91,40 +91,22 @@ input:focus-visible {
 }
 
 .brand-mark {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--ink);
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid var(--ink);
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  position: relative;
-}
-
-.brand-mark::before,
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  background: var(--ink);
-}
-
-.brand-mark::before {
-  width: 2px;
-  height: 34px;
-}
-
-.brand-mark::after {
-  width: 34px;
-  height: 2px;
+  display: inline-block;
+  background-color: var(--paper);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 0 3px rgba(215, 255, 63, 0.22);
+  overflow: hidden;
 }
 
 .brand-mark span {
-  width: 7px;
-  height: 7px;
-  background: var(--acid);
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  position: relative;
-  z-index: 1;
+  display: none;
 }
 
 .top-admin-button {

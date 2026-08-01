@@ -438,7 +438,11 @@ export function SiegeAtlas() {
 
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Camline home" onClick={() => setMode("browse")}>
-          <span className="brand-mark"><span /></span>
+          <span
+            className="brand-mark"
+            aria-hidden="true"
+            style={{ backgroundImage: `url("${publicAsset("/camline-mark.png")}")` }}
+          ><span /></span>
           <span>CAMLINE</span>
           <small>Valkyrie camera atlas</small>
         </a>
@@ -746,7 +750,11 @@ export function SiegeAtlas() {
 
       <footer>
         <div className="brand compact-brand">
-          <span className="brand-mark"><span /></span>
+          <span
+            className="brand-mark"
+            aria-hidden="true"
+            style={{ backgroundImage: `url("${publicAsset("/camline-mark.png")}")` }}
+          ><span /></span>
           <span>CAMLINE</span>
         </div>
         <p>Made by Kyrie2781</p>

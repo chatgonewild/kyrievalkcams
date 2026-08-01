@@ -12,6 +12,7 @@ test("contains the complete Camline atlas experience", async () => {
 
   assert.match(layout, /const title = "Camline"/i);
   assert.match(atlas, /Valkyrie<br \/><em>camera spots\.<\/em>/i);
+  assert.match(atlas, /camline-mark\.png/i);
   assert.match(atlas, /Choose your ground/i);
   assert.match(atlas, /top-admin-button/i);
   assert.match(atlas, /Admin login/i);
