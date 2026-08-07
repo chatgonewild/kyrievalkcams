@@ -159,17 +159,19 @@ export function SiegeAtlas() {
 
   const filteredMaps = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return maps.filter((map) => {
-      const matchesQuery =
-        !normalized ||
-        map.name.toLowerCase().includes(normalized) ||
-        map.location.toLowerCase().includes(normalized);
-      const isRanked = rankedMapSlugs.has(map.slug);
-      const matchesPool =
-        mode === "admin" ||
-        (isRanked ? showRanked : showNonRanked);
-      return matchesQuery && matchesPool;
-    });
+    return maps
+      .filter((map) => {
+        const matchesQuery =
+          !normalized ||
+          map.name.toLowerCase().includes(normalized) ||
+          map.location.toLowerCase().includes(normalized);
+        const isRanked = rankedMapSlugs.has(map.slug);
+        const matchesPool =
+          mode === "admin" ||
+          (isRanked ? showRanked : showNonRanked);
+        return matchesQuery && matchesPool;
+      })
+      .sort((left, right) => left.name.localeCompare(right.name));
   }, [mode, query, showNonRanked, showRanked]);
 
   const poolTransitionKey = `${showRanked ? "ranked" : ""}-${showNonRanked ? "non-ranked" : ""}`;
