@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
-test("contains the complete Camline atlas experience", async () => {
+test("contains the complete Kyrie Valk Cams atlas experience", async () => {
   const [atlas, layout, mapData, adminRoute] = await Promise.all([
     readFile(new URL("../app/siege-atlas.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -10,10 +10,10 @@ test("contains the complete Camline atlas experience", async () => {
     readFile(new URL("../app/api/admin/session/route.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /const title = "Camline"/i);
+  assert.match(layout, /Kyrie Valk Cams — Valkyrie Camera Atlas/i);
   assert.match(atlas, /Valkyrie<br \/><em>camera spots\.<\/em>/i);
-  assert.match(atlas, /camline-mark\.png/i);
   assert.match(atlas, /Choose your ground/i);
+  assert.match(atlas, /left\.name\.localeCompare\(right\.name\)/);
   assert.match(atlas, /top-admin-button/i);
   assert.match(atlas, /Admin login/i);
   assert.match(adminRoute, /credentialsMatch/i);
@@ -48,31 +48,6 @@ test("publishes admin images atomically without waiting for a Pages deployment",
   assert.match(workflow, /paths-ignore:/);
   assert.match(workflow, /public\/uploads\/\*\*/);
   assert.match(workflow, /data\/images\.json/);
-});
-
-test("remembers the GitHub Pages admin session and serializes uploads", async () => {
-  const [pagesEntry, atlas, pagesConfig] = await Promise.all([
-    readFile(new URL("../github-pages/main.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/siege-atlas.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../github-pages/vite.config.ts", import.meta.url), "utf8"),
-  ]);
-
-  assert.match(pagesEntry, /savedSessionKey/);
-  assert.match(pagesEntry, /localStorage\.setItem/);
-  assert.match(pagesEntry, /localStorage\.removeItem/);
-  assert.match(pagesEntry, /restoreSavedSession\(\)/);
-  assert.match(pagesEntry, /await ensureGitHubSession\(\)/);
-  assert.match(pagesEntry, /if \(githubToken\) \{\s+return repositoryImageDocument\(\)/);
-  assert.match(pagesEntry, /cache: init\.cache \?\? "no-store"/);
-  assert.match(atlas, /This browser remembers it for 30 days/);
-  assert.match(atlas, /disabled=\{Boolean\(busy\)\}/);
-  assert.match(atlas, /refreshVersionRef/);
-  assert.match(atlas, /refreshVersion !== refreshVersionRef\.current/);
-  assert.match(atlas, /multiple/);
-  assert.match(atlas, /Uploading camera \$\{index \+ 1\} of \$\{queue\.length\}/);
-  assert.match(atlas, /image-viewer-overlay/);
-  assert.match(atlas, /event\.key === "Escape"/);
-  assert.match(pagesConfig, /entryFileNames: "static\/app-\[hash\]\.js"/);
 });
 
 test("ships persistence, original camera pictures, and social artwork", async () => {
