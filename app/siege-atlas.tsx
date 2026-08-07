@@ -117,17 +117,13 @@ export function SiegeAtlas() {
   const [loginError, setLoginError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const refreshVersionRef = useRef(0);
 
   const refreshImages = useCallback(async () => {
-    const refreshVersion = refreshVersionRef.current;
     try {
       const response = await fetch("/api/images", { cache: "no-store" });
       if (!response.ok) return;
       const data = (await response.json()) as { images: ImageRecord[] };
-      if (refreshVersion !== refreshVersionRef.current) return;
       setImages(Object.fromEntries(data.images.map((image) => [image.slotId, image])));
     } catch {
       // The empty library is the intended first-run state.
@@ -142,20 +138,6 @@ export function SiegeAtlas() {
       window.clearInterval(timer);
     };
   }, [refreshImages]);
-
-  useEffect(() => {
-    if (!previewImage) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPreviewImage(null);
-    };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [previewImage]);
 
   const filteredMaps = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -252,63 +234,47 @@ export function SiegeAtlas() {
   }
 
   function openUpload(map: SiegeMap, siteIndex: number, cameraIndex: number) {
-    if (busy) return;
     setUploadTarget({ map, siteIndex, cameraIndex });
     fileRef.current?.click();
   }
 
-  async function upload(files: File[]) {
-    if (!uploadTarget || files.length === 0) return;
-    const target = uploadTarget;
-    const queue = files.slice(0, camerasPerSite - target.cameraIndex);
-    setUploadTarget(null);
-    refreshVersionRef.current += 1;
-    let completed = 0;
+  async function upload(file: File) {
+    if (!uploadTarget) return;
+    const targetId = slotId(uploadTarget.map, uploadTarget.siteIndex, uploadTarget.cameraIndex);
+    setBusy(targetId);
+    setNotice("");
+    const form = new FormData();
+    form.set("mapSlug", uploadTarget.map.slug);
+    form.set("siteIndex", String(combinedIndex(uploadTarget.siteIndex, uploadTarget.cameraIndex)));
+    form.set("file", file);
 
     try {
-      for (const [index, file] of queue.entries()) {
-        const cameraIndex = target.cameraIndex + index;
-        const targetId = slotId(target.map, target.siteIndex, cameraIndex);
-        setBusy(targetId);
-        setNotice(
-          queue.length > 1
-            ? `Uploading camera ${index + 1} of ${queue.length}…`
-            : `Uploading ${target.map.name} · ${target.map.sites[target.siteIndex]} · Camera ${cameraIndex + 1}…`,
-        );
-        const form = new FormData();
-        form.set("mapSlug", target.map.slug);
-        form.set("siteIndex", String(combinedIndex(target.siteIndex, cameraIndex)));
-        form.set("file", file);
-
-        const response = await fetch("/api/images", { method: "POST", body: form });
-        const result = (await response.json()) as { error?: string; image?: ImageRecord };
-        if (!response.ok) {
-          if (response.status === 401) {
-            setMode("browse");
-            setLoginOpen(true);
-          }
-          throw new Error(result.error ?? "Upload failed.");
+      const response = await fetch("/api/images", { method: "POST", body: form });
+      const result = (await response.json()) as { error?: string; image?: ImageRecord };
+      if (!response.ok) {
+        if (response.status === 401) {
+          setMode("browse");
+          setLoginOpen(true);
         }
-        if (result.image) {
-          setImages((current) => ({ ...current, [targetId]: result.image! }));
-        }
-        completed += 1;
+        throw new Error(result.error ?? "Upload failed.");
+      }
+      if (result.image) {
+        setImages((current) => ({ ...current, [targetId]: result.image! }));
       }
       setNotice(
-        `${target.map.name} · ${target.map.sites[target.siteIndex]} · ${completed} camera image${completed === 1 ? "" : "s"} updated live.`,
+        `${uploadTarget.map.name} · ${uploadTarget.map.sites[uploadTarget.siteIndex]} · Camera ${uploadTarget.cameraIndex + 1} updated live.`
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed.";
-      setNotice(completed ? `${completed} image${completed === 1 ? "" : "s"} uploaded. ${message}` : message);
+      setNotice(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setBusy("");
+      setUploadTarget(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
 
   async function removeImage(map: SiegeMap, siteIndex: number, cameraIndex: number) {
     const targetId = slotId(map, siteIndex, cameraIndex);
-    refreshVersionRef.current += 1;
     setBusy(targetId);
     setNotice("");
     try {
@@ -347,40 +313,12 @@ export function SiegeAtlas() {
         className="sr-only"
         type="file"
         accept="image/jpeg,image/png,image/webp,image/avif"
-        multiple
         aria-label="Choose a camera image"
         onChange={(event) => {
-          const files = Array.from(event.target.files ?? []);
-          if (files.length) void upload(files);
+          const file = event.target.files?.[0];
+          if (file) void upload(file);
         }}
       />
-
-      {previewImage && (
-        <div
-          className="image-viewer-overlay"
-          role="presentation"
-          onMouseDown={() => setPreviewImage(null)}
-        >
-          <section
-            className="image-viewer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Full-size camera image"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <button
-              className="image-viewer-close"
-              aria-label="Close full-size image"
-              autoFocus
-              onClick={() => setPreviewImage(null)}
-            >
-              ×
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewImage.src} alt={previewImage.alt} />
-          </section>
-        </div>
-      )}
 
       {loginOpen && (
         <div className="login-overlay" role="presentation" onMouseDown={() => setLoginOpen(false)}>
@@ -429,7 +367,7 @@ export function SiegeAtlas() {
             {isGitHubPages() && (
               <p className="login-token-note">
                 Use a fine-grained token limited to this repository with Contents read/write access.
-                This browser remembers it for 30 days, or until you sign out.
+                It stays only in this browser tab.
               </p>
             )}
           </section>
@@ -437,14 +375,9 @@ export function SiegeAtlas() {
       )}
 
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Camline home" onClick={() => setMode("browse")}>
-          <span
-            className="brand-mark"
-            aria-hidden="true"
-            style={{ backgroundImage: `url("${publicAsset("/camline-mark.png")}")` }}
-          ><span /></span>
-          <span>CAMLINE</span>
-          <small>Valkyrie camera atlas</small>
+        <a className="brand" href="#top" aria-label="Kyrie Valk Cams home" onClick={() => setMode("browse")}>
+          <span className="brand-mark"><span /></span>
+          <span>KYRIE VALK CAMS</span>
         </a>
         <button className="top-admin-button" onClick={() => void (mode === "admin" ? signOut() : openAdmin())}>
           <span /> {mode === "admin" ? "Sign out" : "Admin"}
@@ -615,22 +548,11 @@ export function SiegeAtlas() {
                         return (
                           <div className="image-slot" key={cameraIndex}>
                             {image.src ? (
-                              <button
-                                className="image-open"
-                                aria-label={`View ${selectedMap.name} ${site} camera ${cameraIndex + 1} full size`}
-                                onClick={() =>
-                                  setPreviewImage({
-                                    src: image.src!,
-                                    alt: `${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`,
-                                  })
-                                }
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={image.src}
-                                  alt={`${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`}
-                                />
-                              </button>
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={image.src}
+                                alt={`${selectedMap.name} ${site} Valkyrie camera position ${cameraIndex + 1}`}
+                              />
                             ) : (
                               <div className="empty-slot">
                                 <CameraGlyph />
@@ -699,19 +621,8 @@ export function SiegeAtlas() {
                             <div className="admin-site-row" key={cameraIndex}>
                               <div className="admin-thumb">
                                 {image.src ? (
-                                  <button
-                                    className="image-open"
-                                    aria-label={`View ${map.name} ${site} camera ${cameraIndex + 1} full size`}
-                                    onClick={() =>
-                                      setPreviewImage({
-                                        src: image.src!,
-                                        alt: `${map.name} ${site} Valkyrie camera position ${cameraIndex + 1}`,
-                                      })
-                                    }
-                                  >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={image.src} alt="" />
-                                  </button>
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={image.src} alt="" />
                                 ) : (
                                   <CameraGlyph />
                                 )}
@@ -722,13 +633,13 @@ export function SiegeAtlas() {
                                 <small>{image.custom?.originalName ?? (image.src ? "Imported from original site" : "No image uploaded")}</small>
                               </div>
                               <div className="admin-actions">
-                                <button disabled={Boolean(busy)} onClick={() => openUpload(map, siteIndex, cameraIndex)}>
+                                <button disabled={isBusy} onClick={() => openUpload(map, siteIndex, cameraIndex)}>
                                   {isBusy ? "Working…" : image.src ? "Replace" : "Upload"}
                                 </button>
                                 {image.custom && (
                                   <button
                                     className="remove"
-                                    disabled={Boolean(busy)}
+                                    disabled={isBusy}
                                     onClick={() => void removeImage(map, siteIndex, cameraIndex)}
                                   >
                                     Clear
@@ -750,12 +661,8 @@ export function SiegeAtlas() {
 
       <footer>
         <div className="brand compact-brand">
-          <span
-            className="brand-mark"
-            aria-hidden="true"
-            style={{ backgroundImage: `url("${publicAsset("/camline-mark.png")}")` }}
-          ><span /></span>
-          <span>CAMLINE</span>
+          <span className="brand-mark"><span /></span>
+          <span>KYRIE VALK CAMS</span>
         </div>
         <p>Made by Kyrie2781</p>
         <button onClick={() => void openAdmin()}>Admin panel ↗</button>
